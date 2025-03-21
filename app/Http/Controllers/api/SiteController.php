@@ -80,7 +80,25 @@ class SiteController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'url' => 'required|url',
+            'connection_status' => ['nullable', new Enum(ConnectionStatus::class)],
+            'wp_core_version' => 'nullable|string',
+            'bridge_plugin_installed' => 'nullable|boolean',
+        ]);
+
+        /** @var User $user */
+        $user = Auth::user();
+        $site = $user->sites()->where('id', $id)->first();
+        $site->url = trim(trim($request->url), '/');
+        $site->pretty_url = $this->pretty_url($request->url);
+        $site->connection_status = $request->connection_status ?? ConnectionStatus::Unknown;
+        $site->wp_core_version = $request->wp_core_version ?? '';
+        $site->bridge_plugin_installed = $request->bridge_plugin_installed ?? false;
+
+        $site->save();
+
+        return new SiteResource($site);
     }
 
     /**
@@ -90,7 +108,12 @@ class SiteController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        /** @var User $user */
+        $user = Auth::user();
+        $site = $user->sites()->where('id', $id)->first();
+        $site->delete();
+
+        return response()->noContent();
     }
 
     public function pretty_url($url)
