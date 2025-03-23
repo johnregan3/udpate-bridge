@@ -22,6 +22,7 @@
         "vite": "^6.0.11"
     },
     "dependencies": {
+        "@heroicons/react": "^2.2.0",
         "clsx": "^2.1.1",
         "framer-motion": "^12.5.0",
         "use-debounce": "^10.0.4"

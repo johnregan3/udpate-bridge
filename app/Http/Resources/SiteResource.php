@@ -21,6 +21,7 @@ class SiteResource extends JsonResource
             'connection_status' => $this->connection_status,
             'bridge_plugin_installed' => $this->bridge_plugin_installed,
             'wp_core_version' => $this->wp_core_version,
+            'site_extensions' => SiteExtensionResource::collection($this->siteExtensions)->toArray($request),
         ];
     }
 }

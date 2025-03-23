@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('extension_id')->constrained()->cascadeOnDelete();
             $table->string('installed_version', 20)->default('');
             $table->boolean('activated')->default(false);
-            $table->boolean('automatic_updates_enabled')->default(false);
+            $table->boolean('automatic_updates')->default(false);
             $table->timestamps();
         });
     }

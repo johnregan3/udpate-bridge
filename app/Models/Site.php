@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class Site.
@@ -49,5 +50,15 @@ class Site extends Model
     public function appPassword(): HasOne
     {
         return $this->hasOne(AppPassword::class);
+    }
+
+    public function siteExtensions(): HasMany
+    {
+        return $this->hasMany(SiteExtension::class);
+    }
+
+    public function extensions()
+    {
+        return $this->hasManyThrough(Extension::class, SiteExtension::class);
     }
 }

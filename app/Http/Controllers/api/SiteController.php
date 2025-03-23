@@ -3,14 +3,22 @@
 namespace App\Http\Controllers\api;
 
 use App\Enums\ConnectionStatus;
+use App\Events\SiteAdded;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SiteResource;
 use App\Models\Site;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Enum;
-use App\Models\User;
+use Symfony\Component\HttpFoundation\Response as ResponseStatus;
 
+/**
+ * Note that this controls API requests, not web requests.
+ *
+ * Class SiteController
+ * @package App\Http\Controllers\api
+ */
 class SiteController extends Controller
 {
 
@@ -23,6 +31,9 @@ class SiteController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        return response()->json(
+            ['user' => $user->name]
+        );
         $sites = $user->sites()->get();
 
         return SiteResource::collection($sites);
@@ -47,14 +58,21 @@ class SiteController extends Controller
         $site = new Site();
         $site->user_id = $user->id;
         $site->url = trim(trim($request->url), '/');
-        $site->pretty_url = $this->pretty_url($request->url);
+        $site->pretty_url = self::pretty_url($request->url);
         $site->connection_status = $request->connection_status ?? ConnectionStatus::Unknown;
         $site->wp_core_version = $request->wp_core_version ?? '';
         $site->bridge_plugin_installed = $request->bridge_plugin_installed ?? false;
 
-        // try/catch block to handle any exceptions that may occur.
-        // Try saving a non-unique URL to trigger the error.
-        $site->save();
+        try {
+            $site->save();
+        } catch (\Exception $e) {
+            return response()->json(
+                ['error' => 'An error occurred while creating this Site.'],
+                ResponseStatus::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        SiteAdded::dispatch($site);
 
         return new SiteResource($site);
     }
@@ -69,6 +87,13 @@ class SiteController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $site = $user->sites()->where('id', $id)->first();
+
+        if (! $site) {
+            return response()->json(
+                ['error' => 'Site not found.'],
+                ResponseStatus::HTTP_NOT_FOUND
+            );
+        }
 
         return new SiteResource($site);
     }
@@ -90,13 +115,28 @@ class SiteController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $site = $user->sites()->where('id', $id)->first();
+
+        if (! $site) {
+            return response()->json(
+                ['error' => 'Site not found.'],
+                ResponseStatus::HTTP_NOT_FOUND
+            );
+        }
+
         $site->url = trim(trim($request->url), '/');
         $site->pretty_url = $this->pretty_url($request->url);
         $site->connection_status = $request->connection_status ?? ConnectionStatus::Unknown;
         $site->wp_core_version = $request->wp_core_version ?? '';
         $site->bridge_plugin_installed = $request->bridge_plugin_installed ?? false;
 
-        $site->save();
+        try {
+            $site->save();
+        } catch (\Exception $e) {
+            return response()->json(
+                ['error' => 'An error occurred while updating this Site.'],
+                ResponseStatus::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
 
         return new SiteResource($site);
     }
@@ -111,12 +151,19 @@ class SiteController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $site = $user->sites()->where('id', $id)->first();
+        if (! $site) {
+            return response()->json(
+                ['error' => 'Site not found.'],
+                ResponseStatus::HTTP_NOT_FOUND
+            );
+        }
+
         $site->delete();
 
         return response()->noContent();
     }
 
-    public function pretty_url($url)
+    public static function pretty_url($url)
     {
         return parse_url($url, PHP_URL_HOST) . parse_url($url, PHP_URL_PATH);
     }
