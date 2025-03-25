@@ -20,7 +20,7 @@ Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard', [
-        'userId' => auth()->id(),
+        'userId' => auth()->id()
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -29,7 +29,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/my-sites', [SiteController::class, 'index'])->name('sites.list');
+    Route::get('/dashboard', [SiteController::class, 'index'])->name('sites.list');
+    Route::get('/sites/add', function () {
+        return Inertia::render('SiteAdd');
+    })->name('sites.add');
+    Route::post('/sites/add', [SiteController::class, 'create'])->name('sites.create');
 });
 
 require __DIR__ . '/auth.php';

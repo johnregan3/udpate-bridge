@@ -1,49 +1,61 @@
+import React from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage } from "@inertiajs/react";
-import { useEffect, useState } from "react";
+import SiteAccordion from "@/Components/SiteAccordion";
+import { Head, Link, usePage } from "@inertiajs/react";
+import Toast from "@/Components/Toast";
 
 export default function Dashboard() {
-    const [sites, setSites] = useState([]);
-    const { userId } = usePage().props;
-
-    useEffect(() => {
-        axios
-            .get("/api/sites", { withCredentials: true })
-            .then((response) => {
-                setSites(response.data);
-            })
-            .catch((error) => {
-                console.error("Error fetching sites:", error.response);
-            });
-    }, []);
+    const { sites } = usePage().props;
 
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Dashboard + {userId}
-                </h2>
+                <div className="flex items-center justify-between  gap-6">
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                        Dashboard
+                    </h2>
+                    <Link
+                        href={route("sites.add")}
+                        variant="outline"
+                        className="inline-flex justify-center rounded-lg border py-[calc(theme(spacing.2)-1px)] px-[calc(theme(spacing.3)-1px)] text-sm outline-2 outline-offset-2 transition-colors"
+                    >
+                        Add Site
+                    </Link>
+                </div>
             }
         >
-            <Head title="Dashboard" />
+            <>
+                <Head title="Dashboard" />
+                <Toast />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            You're logged in!
-                        </div>
-                        <div>
-                            <h1>Sites</h1>
-                            <ul>
+                <div className="py-12">
+                    <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        {sites.length <= 0 ? (
+                            <div className="accordion-item mb-10 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                                <div className="accordion-title p-6 text-gray-900">
+                                    <p className="mb-4">No sites found.</p>
+                                    <Link
+                                        href={route("sites.add")}
+                                        variant="outline"
+                                        className="inline-flex justify-center rounded-lg border py-[calc(theme(spacing.2)-1px)] px-[calc(theme(spacing.3)-1px)] text-sm outline-2 outline-offset-2 transition-colors"
+                                    >
+                                        Add Site
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
                                 {sites.map((site) => (
-                                    <li key={site.id}>{site.url}</li>
+                                    <SiteAccordion
+                                        key={site.id}
+                                        site={site}
+                                    ></SiteAccordion>
                                 ))}
-                            </ul>
-                        </div>
+                            </>
+                        )}
                     </div>
                 </div>
-            </div>
+            </>
         </AuthenticatedLayout>
     );
 }
